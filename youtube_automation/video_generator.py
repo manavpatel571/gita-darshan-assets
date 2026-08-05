@@ -100,24 +100,62 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
     # Video setup (9:16 aspect ratio: 1080x1920)
     width, height = 1080, 1920
     
-    # Generate AI Background — prefer pre-made backgrounds (free, fast, beautiful)
-    bg_dir = LOCAL_ASSETS / "backgrounds" if LOCAL_ASSETS.exists() else Path(__file__).parent / "assets" / "backgrounds"
-    pre_made_bgs = sorted(bg_dir.glob("*.png")) if bg_dir.exists() else []
-    
-    bg_image_path = Path(__file__).parent / f"bg_{chapter}_{verse}.png"
-    
+    # Character-specific background selection with slow Ken Burns zoom
+    bg_root = LOCAL_ASSETS / "backgrounds" if LOCAL_ASSETS.exists() else Path(__file__).parent / "assets" / "backgrounds"
+
+    def get_character_bg_folder(ep):
+        """Return background folder based on main speaker of this verse."""
+        speakers = [d.get("speaker", "").lower() for d in ep.get("subtitles", [])]
+        for s in speakers:
+            if "krishna" in s or "bhagavan" in s or "lord" in s:
+                return bg_root / "krishna"
+            if "arjuna" in s:
+                return bg_root / "arjuna"
+        return bg_root / "sanjaya"  # default Dhritarashtra/Sanjaya
+
+    def make_kenburns_bg(image_path, duration, w, h):
+        """Slowly zoom into the background for a cinematic feel."""
+        import numpy as np
+        from PIL import Image as PILImage
+        src = PILImage.open(image_path).convert("RGB")
+        src_w, src_h = src.size
+
+        fps = 24
+        total_frames = int(duration * fps)
+        zoom_start, zoom_end = 1.0, 1.08  # subtle 8% zoom over the whole clip
+
+        frames = []
+        for i in range(total_frames):
+            t = i / max(total_frames - 1, 1)
+            scale = zoom_start + (zoom_end - zoom_start) * t
+            new_w = int(src_w / scale)
+            new_h = int(src_h / scale)
+            x_off = (src_w - new_w) // 2
+            y_off = (src_h - new_h) // 2
+            cropped = src.crop((x_off, y_off, x_off + new_w, y_off + new_h))
+            resized = cropped.resize((w, h), PILImage.Resampling.LANCZOS)
+            frames.append(np.array(resized))
+
+        def make_frame(t):
+            idx = min(int(t * fps), total_frames - 1)
+            return frames[idx]
+
+        return ImageClip(make_frame, duration=duration, ismask=False)
+
     try:
-        if pre_made_bgs:
-            # Rotate backgrounds based on verse number
-            chosen_bg = pre_made_bgs[(verse - 1) % len(pre_made_bgs)]
-            ai_bg = ImageClip(str(chosen_bg)).set_duration(final_audio.duration)
-            console.print(f"[green]  Using pre-made background: {chosen_bg.name}[/green]")
-        elif not bg_image_path.exists():
-            prompt = episode["dialogue"][1]["text"] if len(episode["dialogue"]) > 1 else episode.get("english", episode["sanskrit"])
-            generate_segment_image(prompt, bg_image_path)
-            ai_bg = ImageClip(str(bg_image_path)).set_duration(final_audio.duration)
+        char_bg_dir = get_character_bg_folder(episode)
+        bg_images = sorted(char_bg_dir.glob("*.png")) if char_bg_dir.exists() else []
+        if not bg_images:
+            # Fallback to any generic background
+            bg_images = sorted(bg_root.glob("*.png"))
+
+        if bg_images:
+            chosen_bg = bg_images[(verse - 1) % len(bg_images)]
+            console.print(f"[green]  Using background: {chosen_bg.parent.name}/{chosen_bg.name}[/green]")
+            ai_bg = make_kenburns_bg(str(chosen_bg), final_audio.duration, width, height)
         else:
-            ai_bg = ImageClip(str(bg_image_path)).set_duration(final_audio.duration)
+            raise FileNotFoundError("No backgrounds found")
+
     except Exception as e:
         console.print(f"[yellow]Failed to load background: {e}[/yellow]")
         # Rich warm gradient fallback (golden/amber tones)
@@ -126,15 +164,16 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
         draw = ImageDraw.Draw(img)
         for y in range(height):
             ratio = y / height
-            r = int(60 + (20 - 60) * ratio)
-            g = int(30 + (10 - 30) * ratio)
+            r = int(80 + (20 - 80) * ratio)
+            g = int(40 + (10 - 40) * ratio)
             b = int(10 + (5 - 10) * ratio)
             draw.line([(0, y), (width, y)], fill=(r, g, b))
         import numpy as np
         ai_bg = ImageClip(np.array(img)).set_duration(final_audio.duration)
-    
+
     # We apply a slight vignette/darkening to the AI background so text pops
-    dark_overlay = ColorClip(size=(width, height), color=(0, 0, 0)).set_duration(final_audio.duration).set_opacity(0.4)
+    dark_overlay = ColorClip(size=(width, height), color=(0, 0, 0)).set_duration(final_audio.duration).set_opacity(0.35)
+
     
     # Text Overlays Helper (using PIL instead of ImageMagick for robust text rendering)
     try:
