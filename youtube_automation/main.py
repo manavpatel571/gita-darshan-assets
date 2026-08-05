@@ -59,13 +59,12 @@ def main():
         metadata = generate_video(chapter, verse, str(video_path))
         
         # 2. Upload Video
-        # Note: the user can change privacy to "public" after testing
         upload_response = upload_video(
             video_path=str(video_path),
             title=metadata["title"],
             description=metadata["description"],
             tags=metadata["tags"],
-            privacy="private"
+            privacy="public"
         )
         
         # 3. Save History

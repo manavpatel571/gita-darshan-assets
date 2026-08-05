@@ -173,8 +173,8 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
         import numpy as np
         ai_bg = ImageClip(np.array(img)).set_duration(final_audio.duration)
 
-    # We apply a slight vignette/darkening to the AI background so text pops
-    dark_overlay = ColorClip(size=(width, height), color=(0, 0, 0)).set_duration(final_audio.duration).set_opacity(0.35)
+    # No dark overlay - show background as-is
+    dark_overlay = ColorClip(size=(width, height), color=(0, 0, 0)).set_duration(final_audio.duration).set_opacity(0.0)
 
     
     # Text Overlays Helper (using PIL instead of ImageMagick for robust text rendering)
