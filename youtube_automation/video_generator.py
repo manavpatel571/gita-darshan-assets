@@ -232,7 +232,7 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
     
     return {
         "title": f"Bhagavad Gita Chapter {chapter} Verse {verse} #Shorts #BhagavadGita",
-        "description": f"{episode['sanskrit']}\n\n{episode['dialogue'][1]['text'] if len(episode['dialogue']) > 1 else ''}\n\nDaily Shloka from the Bhagavad Gita App.\nChannel: https://www.youtube.com/channel/UCWTBK6mUpE80zm66HNHAUUw",
+        "description": f"{episode['sanskrit']}\n\n{episode['dialogue'][1]['text'] if len(episode['dialogue']) > 1 else ''}\n\nDaily Shloka from the Bhagavad Gita App.\nChannel: https://www.youtube.com/channel/UCWTBK6mUpE80zm66HNHAUUw\n\nDownload the full app to listen to all verses:\nhttps://play.google.com/store/apps/details?id=com.gitadarshan.app&pcampaignid=web_share",
         "tags": ["BhagavadGita", "Shorts", "Krishna", "Spirituality", "Hinduism", "DailyShloka"]
     }
 
