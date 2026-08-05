@@ -100,16 +100,38 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
     # Video setup (9:16 aspect ratio: 1080x1920)
     width, height = 1080, 1920
     
-    # Generate AI Background
+    # Generate AI Background — prefer pre-made backgrounds (free, fast, beautiful)
+    bg_dir = LOCAL_ASSETS / "backgrounds" if LOCAL_ASSETS.exists() else Path(__file__).parent / "assets" / "backgrounds"
+    pre_made_bgs = sorted(bg_dir.glob("*.png")) if bg_dir.exists() else []
+    
     bg_image_path = Path(__file__).parent / f"bg_{chapter}_{verse}.png"
-    prompt = episode["dialogue"][1]["text"] if len(episode["dialogue"]) > 1 else episode.get("english", episode["sanskrit"])
+    
     try:
-        if not bg_image_path.exists():
+        if pre_made_bgs:
+            # Rotate backgrounds based on verse number
+            chosen_bg = pre_made_bgs[(verse - 1) % len(pre_made_bgs)]
+            ai_bg = ImageClip(str(chosen_bg)).set_duration(final_audio.duration)
+            console.print(f"[green]  Using pre-made background: {chosen_bg.name}[/green]")
+        elif not bg_image_path.exists():
+            prompt = episode["dialogue"][1]["text"] if len(episode["dialogue"]) > 1 else episode.get("english", episode["sanskrit"])
             generate_segment_image(prompt, bg_image_path)
-        ai_bg = ImageClip(str(bg_image_path)).set_duration(final_audio.duration)
+            ai_bg = ImageClip(str(bg_image_path)).set_duration(final_audio.duration)
+        else:
+            ai_bg = ImageClip(str(bg_image_path)).set_duration(final_audio.duration)
     except Exception as e:
-        console.print(f"[yellow]Failed to generate AI background: {e}[/yellow]")
-        ai_bg = ColorClip(size=(width, height), color=(15, 15, 20)).set_duration(final_audio.duration)
+        console.print(f"[yellow]Failed to load background: {e}[/yellow]")
+        # Rich warm gradient fallback (golden/amber tones)
+        from PIL import Image as PILImage, ImageDraw
+        img = PILImage.new("RGB", (width, height))
+        draw = ImageDraw.Draw(img)
+        for y in range(height):
+            ratio = y / height
+            r = int(60 + (20 - 60) * ratio)
+            g = int(30 + (10 - 30) * ratio)
+            b = int(10 + (5 - 10) * ratio)
+            draw.line([(0, y), (width, y)], fill=(r, g, b))
+        import numpy as np
+        ai_bg = ImageClip(np.array(img)).set_duration(final_audio.duration)
     
     # We apply a slight vignette/darkening to the AI background so text pops
     dark_overlay = ColorClip(size=(width, height), color=(0, 0, 0)).set_duration(final_audio.duration).set_opacity(0.4)
