@@ -8,11 +8,21 @@ from image_generator import generate_segment_image
 
 console = Console()
 
-GITA_ROOT = Path(r"d:\old_laptop\startup\gita")
-EPISODES_JSON = GITA_ROOT / "mobile/src/data/episodes.json"
-ASSETS_AUDIO_LOCAL = GITA_ROOT / "mobile/assets/audio"
-ASSETS_AUDIO_CDN = GITA_ROOT / "content/cdn_storage/audio"
-ASSETS_CHARACTERS = GITA_ROOT / "mobile/assets/characters"
+# Try to use relative paths for GitHub Actions, otherwise fallback to local dev path
+ROOT_DIR = Path(__file__).parent
+LOCAL_ASSETS = ROOT_DIR / "assets"
+
+if LOCAL_ASSETS.exists():
+    ASSETS_CHARACTERS = LOCAL_ASSETS / "characters"
+    ASSETS_AUDIO_LOCAL = LOCAL_ASSETS / "audio"
+    EPISODES_PATH = LOCAL_ASSETS / "episodes.json"
+else:
+    GITA_ROOT = Path(r"d:\old_laptop\startup\gita")
+    ASSETS_CHARACTERS = GITA_ROOT / "mobile/assets/characters"
+    ASSETS_AUDIO_LOCAL = GITA_ROOT / "mobile/assets/audio"
+    EPISODES_PATH = GITA_ROOT / "mobile/src/data/episodes.json"
+    
+ASSETS_AUDIO_CDN = ASSETS_AUDIO_LOCAL # For backward compatibility
 
 def get_character_video(speaker, label=None):
     """Map speaker and label from episodes.json to the correct character animation."""
@@ -40,8 +50,8 @@ def get_character_video(speaker, label=None):
 
 def generate_video(chapter: int, verse: int, output_path: str) -> dict:
     console.print(f"[cyan]Generating Video for Chapter {chapter}, Verse {verse}...[/cyan]")
-    
-    with open(EPISODES_JSON, "r", encoding="utf-8") as f:
+    # Read episodes data
+    with open(EPISODES_PATH, "r", encoding="utf-8") as f:
         episodes = json.load(f)
     
     episode = next((e for e in episodes if e["chapter"] == chapter and e["verse"] == verse), None)
