@@ -117,6 +117,7 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
         """Slowly zoom into the background for a cinematic feel."""
         import numpy as np
         from PIL import Image as PILImage
+        from moviepy.editor import VideoClip
         src = PILImage.open(image_path).convert("RGB")
         src_w, src_h = src.size
 
@@ -140,7 +141,8 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
             idx = min(int(t * fps), total_frames - 1)
             return frames[idx]
 
-        return ImageClip(make_frame, duration=duration, ismask=False)
+        # Use VideoClip (not ImageClip) since we have a time-varying frame function
+        return VideoClip(make_frame, duration=duration)
 
     try:
         char_bg_dir = get_character_bg_folder(episode)
