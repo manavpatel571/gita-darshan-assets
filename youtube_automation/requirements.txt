@@ -2,7 +2,7 @@ google-api-python-client
 google-auth-oauthlib
 google-auth-httplib2
 moviepy==1.0.3
-Pillow
+Pillow==9.5.0
 rich
 google-genai
 requests
