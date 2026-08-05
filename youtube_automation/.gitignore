@@ -1,6 +1,6 @@
 __pycache__/
-*.mp4
-*.png
+test_output.mp4
+test_output_audio.mp3
 credentials/
 output/
 .env

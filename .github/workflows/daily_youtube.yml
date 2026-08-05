@@ -40,6 +40,8 @@ jobs:
           echo "$TOKEN_JSON" > credentials/token.json
           
       - name: Run Video Generation & Upload
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           cd youtube_automation
           python main.py
