@@ -123,9 +123,14 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
             img = Image.new('RGBA', (max_width, 800), (255, 255, 255, 0))
             draw = ImageDraw.Draw(img)
             try:
-                # Use Nirmala.ttc for Devanagari support
-                font = ImageFont.truetype("C:\\Windows\\Fonts\\Nirmala.ttc", font_size)
-            except:
+                # Check if we have our local font (for GitHub Actions / Cross-platform)
+                local_font_path = LOCAL_ASSETS / "font.ttf"
+                if local_font_path.exists():
+                    font = ImageFont.truetype(str(local_font_path), font_size)
+                else:
+                    # Fallback to Windows Nirmala UI
+                    font = ImageFont.truetype("C:\\Windows\\Fonts\\Nirmala.ttc", font_size)
+            except IOError:
                 font = ImageFont.load_default()
             
             lines = []
