@@ -77,9 +77,12 @@ def main():
     except ValueError as e:
         # If episode not found, maybe we reached the end of the chapter
         console.print(f"[bold yellow]Verse {chapter}.{verse} failed: {e}. Trying next chapter...[/bold yellow]")
-        # A robust solution would increment the chapter and verse = 1 here and retry
+        import sys
+        sys.exit(1)
     except Exception as e:
         console.print(f"[bold red]Automation Failed: {e}[/bold red]")
+        import sys
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
