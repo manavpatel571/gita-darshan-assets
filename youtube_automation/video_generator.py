@@ -293,8 +293,34 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
 
     final_video = final_video.set_audio(final_audio)
 
+    # Append Outro Logo Animation with Krishna Voice Callout
+    from moviepy.editor import concatenate_videoclips
+    outro_logo_path = LOCAL_ASSETS / "outro_logo.mp4"
+    outro_audio_path = LOCAL_ASSETS / "outro_audio.mp3"
+
+    if outro_logo_path.exists():
+        console.print("[cyan]Appending Outro Logo animation & Krishna callout...[/cyan]")
+        outro_clip = VideoFileClip(str(outro_logo_path))
+        
+        # Fit 16:9 or custom video into 9:16 vertical 1080x1920 format
+        outro_clip = outro_clip.resize(width=width)
+        if outro_clip.h > height:
+            outro_clip = outro_clip.crop(y_center=outro_clip.h/2, height=height)
+        elif outro_clip.h < height:
+            pad_y = (height - outro_clip.h) // 2
+            outro_clip = outro_clip.margin(top=pad_y, bottom=pad_y, color=(0, 0, 0))
+
+        if outro_audio_path.exists():
+            outro_audio = AudioFileClip(str(outro_audio_path))
+            outro_duration = max(outro_audio.duration + 0.5, 4.0)
+            outro_clip = outro_clip.loop(duration=outro_duration).set_audio(outro_audio)
+
+        final_full_video = concatenate_videoclips([final_video, outro_clip], method="compose")
+    else:
+        final_full_video = final_video
+
     console.print("[cyan]Writing final video file...[/cyan]")
-    final_video.write_videofile(output_path, fps=24, codec="libx264", audio_codec="aac", logger=None)
+    final_full_video.write_videofile(output_path, fps=24, codec="libx264", audio_codec="aac", logger=None)
     
     console.print(f"[green]Video saved successfully to {output_path}[/green]")
     
