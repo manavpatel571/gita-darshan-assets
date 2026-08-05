@@ -25,7 +25,7 @@ def get_authenticated_service():
     
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            console.print("[cyan]🔄 Refreshing YouTube token...[/cyan]")
+            console.print("[cyan]Refreshing YouTube token...[/cyan]")
             creds.refresh(Request())
         else:
             if not CLIENT_SECRET_FILE.exists():
@@ -33,7 +33,7 @@ def get_authenticated_service():
                     f"Missing {CLIENT_SECRET_FILE}. Please download OAuth client secrets from Google Cloud Console."
                 )
             
-            console.print("[cyan]🔑 Starting YouTube OAuth flow...[/cyan]")
+            console.print("[cyan]Starting YouTube OAuth flow...[/cyan]")
             flow = InstalledAppFlow.from_client_secrets_file(
                 str(CLIENT_SECRET_FILE), SCOPES
             )
@@ -43,7 +43,7 @@ def get_authenticated_service():
         CREDENTIALS_DIR.mkdir(parents=True, exist_ok=True)
         with open(TOKEN_FILE, "w") as f:
             f.write(creds.to_json())
-        console.print("[green]✓ YouTube token saved[/green]")
+        console.print("[green]YouTube token saved[/green]")
     
     return build("youtube", "v3", credentials=creds)
 
@@ -54,7 +54,7 @@ def upload_video(video_path: str, title: str, description: str, tags: list, priv
     
     youtube = get_authenticated_service()
     
-    console.print(f"[cyan]📤 Uploading {video_path.name} to YouTube...[/cyan]")
+    console.print(f"[cyan]Uploading {video_path.name} to YouTube...[/cyan]")
     
     body = {
         "snippet": {
@@ -87,10 +87,10 @@ def upload_video(video_path: str, title: str, description: str, tags: list, priv
         status, response = request.next_chunk()
         if status:
             progress = int(status.progress() * 100)
-            console.print(f"  ⬆ Upload progress: {progress}%")
+            console.print(f"  Upload progress: {progress}%")
             
     video_id = response["id"]
-    console.print(f"[green]✓ Upload complete! URL: https://youtube.com/shorts/{video_id}[/green]")
+    console.print(f"[green]Upload complete! URL: https://youtube.com/shorts/{video_id}[/green]")
     return response
 
 if __name__ == "__main__":
