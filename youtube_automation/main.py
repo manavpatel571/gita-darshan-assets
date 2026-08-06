@@ -4,6 +4,7 @@ from pathlib import Path
 from rich.console import Console
 from video_generator import generate_video
 from youtube_uploader import upload_video
+from instagram_uploader import upload_reel
 
 console = Console()
 
@@ -26,9 +27,6 @@ def get_next_shloka():
     last_ch = last_entry["chapter"]
     last_v = last_entry["verse"]
     
-    # We don't have the exact number of verses per chapter here, 
-    # but we can try next verse, and if it fails in generator, increment chapter.
-    # For now, let's just increment verse.
     return last_ch, last_v + 1
 
 def update_history(chapter, verse, video_id):
@@ -58,7 +56,7 @@ def main():
         # 1. Generate Video
         metadata = generate_video(chapter, verse, str(video_path))
         
-        # 2. Upload Video
+        # 2. Upload Video to YouTube
         upload_response = upload_video(
             video_path=str(video_path),
             title=metadata["title"],
@@ -67,14 +65,17 @@ def main():
             privacy="public"
         )
         
-        # 3. Save History
-        video_id = upload_response["id"]
+        # 3. Upload Video to Instagram Reels (if credentials present)
+        ig_caption = f"{metadata['title']}\n\n{metadata['description']}\n\n#BhagavadGita #Gita #Krishna #Spiritual #Reels #Shorts"
+        upload_reel(str(video_path), ig_caption)
+
+        # 4. Save History
+        video_id = upload_response.get("id", "uploaded")
         update_history(chapter, verse, video_id)
         
         console.print("[bold green]Daily Automation Completed Successfully![/bold green]")
         
     except ValueError as e:
-        # If episode not found, maybe we reached the end of the chapter
         console.print(f"[bold yellow]Verse {chapter}.{verse} failed: {e}. Trying next chapter...[/bold yellow]")
         import sys
         sys.exit(1)
