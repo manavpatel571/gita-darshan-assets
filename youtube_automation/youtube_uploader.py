@@ -26,8 +26,13 @@ def get_authenticated_service():
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             console.print("[cyan]Refreshing YouTube token...[/cyan]")
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except Exception as err:
+                console.print(f"[yellow]Token refresh failed ({err}). Triggering fresh OAuth login...[/yellow]")
+                creds = None
+
+        if not creds:
             if not CLIENT_SECRET_FILE.exists():
                 raise FileNotFoundError(
                     f"Missing {CLIENT_SECRET_FILE}. Please download OAuth client secrets from Google Cloud Console."
