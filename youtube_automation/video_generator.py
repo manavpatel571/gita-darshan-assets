@@ -304,7 +304,7 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
 
     if outro_logo_path.exists():
         console.print("[cyan]Appending Outro Logo animation & Krishna callout...[/cyan]")
-        outro_clip = VideoFileClip(str(outro_logo_path))
+        outro_clip = VideoFileClip(str(outro_logo_path), audio=False)
         
         # Fit 16:9 or custom video into 9:16 vertical 1080x1920 format
         outro_clip = outro_clip.resize(width=width)
