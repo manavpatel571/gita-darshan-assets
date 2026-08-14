@@ -62,21 +62,25 @@ def generate_video(chapter: int, verse: int, output_path: str) -> dict:
     audio_dir_name = f"{chapter}_{verse}"
     audio_dir = ASSETS_AUDIO_LOCAL / audio_dir_name
     if not audio_dir.exists():
+        audio_dir = ASSETS_AUDIO_LOCAL / "en" / audio_dir_name
+    if not audio_dir.exists():
         audio_dir = ASSETS_AUDIO_CDN / audio_dir_name
-        
-    if audio_dir.exists():
-        # Prevent duplicates by picking only one file per prefix (00, 01, 02)
-        # Prefer narrator if multiple exist
-        audio_files = []
-        for prefix in ["00_", "01_", "02_", "03_"]:
-            files = list(audio_dir.glob(f"{prefix}*.mp3"))
-            if files:
-                narrator_file = next((f for f in files if "narrator" in f.name.lower()), None)
-                audio_files.append(narrator_file if narrator_file else files[0])
-                
-        if not audio_files:
-            raise FileNotFoundError(f"Audio files not found in {audio_dir}")
+
+    if not audio_dir.exists():
+        raise FileNotFoundError(f"Audio directory '{audio_dir_name}' not found in {ASSETS_AUDIO_LOCAL}")
+
+    # Prevent duplicates by picking only one file per prefix (00, 01, 02)
+    # Prefer narrator if multiple exist
+    audio_files = []
+    for prefix in ["00_", "01_", "02_", "03_"]:
+        files = list(audio_dir.glob(f"{prefix}*.mp3"))
+        if files:
+            narrator_file = next((f for f in files if "narrator" in f.name.lower()), None)
+            audio_files.append(narrator_file if narrator_file else files[0])
             
+    if not audio_files:
+        raise FileNotFoundError(f"No .mp3 audio files found inside {audio_dir}")
+        
     console.print(f"[dim]  Audio sourced from: {audio_dir}[/dim]")
         
     # Build Main Audio Track
